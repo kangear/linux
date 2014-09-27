@@ -2594,6 +2594,18 @@ static void __init machine_rk30_board_init(void)
 #if defined(CONFIG_MT5931_MT6622)
 		clk_set_rate(clk_get_sys("rk_serial.0", "uart"), 24*1000000);
 #endif		
+    //added by tiny_pi for usb-host enable
+    printk(KERN_ERR "added by tiny_pi for usb-host enable");
+    gpio_request(RK30_PIN0_PD4, "usb-hostpowerenable");
+    gpio_direction_output(RK30_PIN0_PD4, GPIO_HIGH);
+    //added by tiny_pi for ap6330 power on
+#if defined(CONFIG_RKWIFI) || defined(CONFIG_RFKILL_RK)
+    gpio_request(RK30_PIN0_PB7, "AP6330powerenable");
+    gpio_direction_output(RK30_PIN0_PB7, GPIO_HIGH);
+#endif
+    //added by tiny_pi for RMII power on
+    gpio_request(RK30_PIN1_PB7, "RMIIpowerenable");
+    gpio_direction_output(RK30_PIN1_PB7, GPIO_HIGH);
 }
 #define HD_SCREEN_SIZE 1920UL*1200UL*4*3
 static void __init rk30_reserve(void)
