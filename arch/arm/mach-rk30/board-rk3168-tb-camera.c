@@ -33,6 +33,8 @@ Comprehensive camera device registration:
                              mclk)\           // sensor input clock rate, 24 or 48
                           
 */
+
+/*deleted by gjt 
 static struct rkcamera_platform_data new_camera[] = { 
     new_camera_device(RK29_CAM_SENSOR_OV5640,
                         back,
@@ -50,8 +52,90 @@ static struct rkcamera_platform_data new_camera[] = {
                         0),                        
     new_camera_device_end  
 };
+*/
+/*********for debug by gjt*********/
+#if 1
+static struct rkcamera_platform_data new_camera[] = { 
+/*
+	new_camera_device(RK29_CAM_SENSOR_HM2057,
+						back,
+						RK30_PIN3_PB4,
+						0,
+						0,
+						3,
+						0),
+						*/
+#if 0
+    new_camera_device_ex(RK29_CAM_SENSOR_OV5640,
+                        back,
+                        INVALID_VALUE,
+                        INVALID_VALUE,
+                        INVALID_VALUE,
+                        INVALID_VALUE,
+                        INVALID_VALUE,
+                        RK30_PIN3_PB5,
+                        CONS(RK29_CAM_SENSOR_OV5640,_PWRDN_ACTIVE),
+                        1,
+                        CONS(RK29_CAM_SENSOR_OV5640,_FULL_RESOLUTION),
+                        0x00,
+                        3,
+                        100000,
+                        CONS(RK29_CAM_SENSOR_OV5640,_I2C_ADDR),
+                        0,
+                        24),     
+#endif
+	new_camera_device_ex(RK29_CAM_SENSOR_HM2057,
+						front, //back,
+						0,
+						//RK30_PIN3_PB4,
+						RK30_PIN3_PB5,// pwr_io,»òÕßpb4 141
+						1,
+						INVALID_VALUE,//RST
+						INVALID_VALUE,
+						//RK30_PIN3_PB5,
+						RK30_PIN3_PB4,//POWER_D
+						1,
+						0,//FLASH
+						CONS(RK29_CAM_SENSOR_HM2057,_FULL_RESOLUTION),
+						0x00,
+						3,
+						100000,
+						0x48,
+						0,
+						24),
+    new_camera_device_end					
+};
+#endif
+#if 1
+#define CONFIG_SENSOR_0 RK29_CAM_SENSOR_HM2057						/* back camera sensor */
+#define CONFIG_SENSOR_IIC_ADDR_0 	    0x00
+#define CONFIG_SENSOR_CIF_INDEX_0                    1///1
+#define CONFIG_SENSOR_IIC_ADAPTER_ID_0   3
+#define CONFIG_SENSOR_ORIENTATION_0       0
+#define CONFIG_SENSOR_POWER_PIN_0         RK30_PIN3_PB4////INVALID_GPIO
+#define CONFIG_SENSOR_RESET_PIN_0         INVALID_GPIO
+#define CONFIG_SENSOR_POWERDN_PIN_0       RK30_PIN3_PB5
+#define CONFIG_SENSOR_FALSH_PIN_0         INVALID_GPIO
+#define CONFIG_SENSOR_POWERACTIVE_LEVEL_0 RK29_CAM_POWERACTIVE_H
+#define CONFIG_SENSOR_RESETACTIVE_LEVEL_0 RK29_CAM_RESETACTIVE_L
+#define CONFIG_SENSOR_POWERDNACTIVE_LEVEL_0 RK29_CAM_POWERDNACTIVE_H
+#define CONFIG_SENSOR_FLASHACTIVE_LEVEL_0 RK29_CAM_FLASHACTIVE_L
+
+#define CONFIG_SENSOR_QCIF_FPS_FIXED_0      15000
+#define CONFIG_SENSOR_240X160_FPS_FIXED_0   15000
+#define CONFIG_SENSOR_QVGA_FPS_FIXED_0      15000
+#define CONFIG_SENSOR_CIF_FPS_FIXED_0       15000
+#define CONFIG_SENSOR_VGA_FPS_FIXED_0       15000
+#define CONFIG_SENSOR_480P_FPS_FIXED_0      15000
+#define CONFIG_SENSOR_SVGA_FPS_FIXED_0      15000
+#define CONFIG_SENSOR_720P_FPS_FIXED_0      30000					
+					
+
 /*---------------- Camera Sensor Macro Define Begin  ------------------------*/
 /*---------------- Camera Sensor Configuration Macro Begin ------------------------*/
+/*---------------- Camera Sensor Configuration Macro Begin ------------------------*/
+
+
 #define CONFIG_SENSOR_0 RK29_CAM_SENSOR_OV5642						/* back camera sensor */
 #define CONFIG_SENSOR_IIC_ADDR_0		0
 #define CONFIG_SENSOR_IIC_ADAPTER_ID_0	  4
@@ -185,6 +269,8 @@ static struct rkcamera_platform_data new_camera[] = {
 #define CONFIG_SENSOR_SVGA_FPS_FIXED_12      15000
 #define CONFIG_SENSOR_720P_FPS_FIXED_12      30000
 
+#endif
+
 
 #endif  //#ifdef CONFIG_VIDEO_RK29
 /*---------------- Camera Sensor Configuration Macro End------------------------*/
@@ -198,8 +284,8 @@ static struct rkcamera_platform_data new_camera[] = {
  *****************************************************************************************/
 #ifdef CONFIG_VIDEO_RK29
 #define CONFIG_SENSOR_POWER_IOCTL_USR	   1 //define this refer to your board layout
-#define CONFIG_SENSOR_RESET_IOCTL_USR	   0
-#define CONFIG_SENSOR_POWERDOWN_IOCTL_USR	   0
+#define CONFIG_SENSOR_RESET_IOCTL_USR	   1
+#define CONFIG_SENSOR_POWERDOWN_IOCTL_USR	   1
 #define CONFIG_SENSOR_FLASH_IOCTL_USR	   0
 #define CONFIG_SENSOR_AF_IOCTL_USR	   0
 
@@ -210,45 +296,65 @@ static void rk_cif_power(struct rk29camera_gpio_res *res,int on)
 	  int camera_ioflag = res->gpio_flag;
 	  int camera_io_init = res->gpio_init;
 	  
-	ldo_28 = regulator_get(NULL, "ldo7");	// vcc28_cif
-	ldo_18 = regulator_get(NULL, "ldo1");	// vcc18_cif
+	ldo_28 = regulator_get(NULL, "act_ldo8");	// vcc28_cif
+	ldo_18 = regulator_get(NULL, "act_ldo3");	// vcc18_cif
 	if (ldo_28 == NULL || IS_ERR(ldo_28) || ldo_18 == NULL || IS_ERR(ldo_18)){
 		printk("get cif ldo failed!\n");
 		return;
 		}
 	if(on == 0){
+#if 0		
 		while(regulator_is_enabled(ldo_28)>0)	
 			regulator_disable(ldo_28);
 		regulator_put(ldo_28);
 		while(regulator_is_enabled(ldo_18)>0)
 			regulator_disable(ldo_18);
 		regulator_put(ldo_18);
+	
 		mdelay(10);
 	if (camera_power != INVALID_GPIO)  {
 		  if (camera_io_init & RK29_CAM_POWERACTIVE_MASK) {
+			 printk("power set value000 = %d camera_power= %d\n",(((~camera_ioflag)&RK29_CAM_POWERACTIVE_MASK)>>RK29_CAM_POWERACTIVE_BITPOS),camera_power);	  	
 			  gpio_set_value(camera_power, (((~camera_ioflag)&RK29_CAM_POWERACTIVE_MASK)>>RK29_CAM_POWERACTIVE_BITPOS));
 			//	dprintk("%s..%s..PowerPin=%d ..PinLevel = %x	 \n",__FUNCTION__,res->dev_name, camera_power, (((~camera_ioflag)&RK29_CAM_POWERACTIVE_MASK)>>RK29_CAM_POWERACTIVE_BITPOS));
 			}
 		}
+#endif	
 		}
 	else{
+#if 	0	
 		regulator_set_voltage(ldo_28, 2800000, 2800000);
 		regulator_enable(ldo_28);
    //	printk("%s set ldo7 vcc28_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_28));
 		regulator_put(ldo_28);
 
-		regulator_set_voltage(ldo_18, 1800000, 1800000);
+		regulator_set_voltage(ldo_18, 2800000, 2800000);
 	//	regulator_set_suspend_voltage(ldo, 1800000);
 		regulator_enable(ldo_18);
 	//	printk("%s set ldo1 vcc18_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_18));
 		regulator_put(ldo_18);
+#endif	
+		//mdelay(10);
 	if (camera_power != INVALID_GPIO)  {
 		  if (camera_io_init & RK29_CAM_POWERACTIVE_MASK) {
-			gpio_set_value(camera_power, ((camera_ioflag&RK29_CAM_POWERACTIVE_MASK)>>RK29_CAM_POWERACTIVE_BITPOS));
+		  	 printk("power set value111 = %d camera_power= %d\n",((camera_ioflag&RK29_CAM_POWERACTIVE_MASK)>>RK29_CAM_POWERACTIVE_BITPOS),camera_power);	
+			 gpio_set_value(camera_power, ((camera_ioflag&RK29_CAM_POWERACTIVE_MASK)>>RK29_CAM_POWERACTIVE_BITPOS));
+			 //rk30_mux_api_set(GPIO3B4_SDMMC0DATA2_NAME,0);
+			 //gpio_set_value(RK30_PIN3_PB4, 1);
 			//dprintk("%s..%s..PowerPin=%d ..PinLevel = %x	 \n",__FUNCTION__,res->dev_name, camera_power, ((camera_ioflag&RK29_CAM_POWERACTIVE_MASK)>>RK29_CAM_POWERACTIVE_BITPOS));
 			mdelay(10);
 			}
 	}
+		regulator_set_voltage(ldo_28, 2800000, 2800000);
+		regulator_enable(ldo_28);
+  		 //	printk("%s set ldo7 vcc28_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_28));
+		regulator_put(ldo_28);
+
+		regulator_set_voltage(ldo_18, 2800000, 2800000);
+		//	regulator_set_suspend_voltage(ldo, 1800000);
+		regulator_enable(ldo_18);
+		//	printk("%s set ldo1 vcc18_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_18));
+		regulator_put(ldo_18);
 
 	}
 }
@@ -261,6 +367,24 @@ static int sensor_power_usr_cb (struct rk29camera_gpio_res *res,int on)
 	return 0;
 }
 #endif
+
+
+#if CONFIG_SENSOR_RESET_IOCTL_USR
+static int sensor_reset_usr_cb (struct rk29camera_gpio_res *res,int on)
+{
+	//gpio_set_value(RK30_PIN3_PB4, 1);
+}
+#endif
+
+#if CONFIG_SENSOR_POWERDOWN_IOCTL_USR
+static int sensor_powerdown_usr_cb (struct rk29camera_gpio_res *res,int on)
+{
+	//gpio_set_value(RK30_PIN3_PB4, 1);
+	gpio_set_value(RK30_PIN3_PB4, 0);
+}
+#endif
+
+
 
 #if CONFIG_SENSOR_FLASH_IOCTL_USR
 static int sensor_flash_usr_cb (struct rk29camera_gpio_res *res,int on)

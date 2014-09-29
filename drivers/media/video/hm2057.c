@@ -23,17 +23,17 @@ module_param(debug, int, S_IRUGO|S_IWUSR);
 /* Sensor Driver Configuration Begin */
 #define SENSOR_NAME RK29_CAM_SENSOR_HM2057
 #define SENSOR_V4L2_IDENT V4L2_IDENT_HM2057
-#define SENSOR_ID 0x2056
+#define SENSOR_ID 0x2056//0x00
 #define SENSOR_BUS_PARAM                     (SOCAM_MASTER |\
                                              SOCAM_PCLK_SAMPLE_RISING|SOCAM_HSYNC_ACTIVE_HIGH| SOCAM_VSYNC_ACTIVE_LOW|\
                                              SOCAM_DATA_ACTIVE_HIGH | SOCAM_DATAWIDTH_8  |SOCAM_MCLK_24MHZ)
 #define SENSOR_PREVIEW_W                     800
 #define SENSOR_PREVIEW_H                     600
 #define SENSOR_PREVIEW_FPS                   15000     // 15fps 
-#define SENSOR_FULLRES_L_FPS                 7500      // 7.5fps
-#define SENSOR_FULLRES_H_FPS                 7500      // 7.5fps
-#define SENSOR_720P_FPS                      0
-#define SENSOR_1080P_FPS                     0
+#define SENSOR_FULLRES_L_FPS                 15000      // 7.5fps,7500 modified by gjt
+#define SENSOR_FULLRES_H_FPS                 15000      // 7.5fps,7500 modified by gjt
+#define SENSOR_720P_FPS                      30000		//0 ,modified by gjt
+#define SENSOR_1080P_FPS                     15000		//0 ,modified by gjt
 
 #define SENSOR_REGISTER_LEN                  2         // sensor register address bytes
 #define SENSOR_VALUE_LEN                     1         // sensor register value bytes
@@ -66,7 +66,6 @@ struct specific_sensor{
 	struct generic_sensor common_sensor;
 	//define user data below
 	
-
 };
 
 /*
@@ -95,12 +94,17 @@ struct specific_sensor{
 
 /* Sensor initial setting */
 static struct rk_sensor_reg sensor_init_data[] = {
+	//VGA preview 
 {0x0022,0x00},
+{0x0025,0x00}, //80
+{0x0026,0x87},
+{0x0027,0x10},//0x30},
+{0x0020,0x40},
 {0x0004,0x10},
 {0x0006,0x00},
 {0x000D,0x11},
 {0x000E,0x11},
-{0x000F,0x10},//00
+{0x000F,0x00},//00
 {0x0011,0x02},
 {0x0012,0x1C},
 {0x0013,0x01},
@@ -108,16 +112,8 @@ static struct rk_sensor_reg sensor_init_data[] = {
 {0x0016,0x80},
 {0x0018,0x00},
 {0x001D,0x40},
-{0x0020,0x40},
-
-#if SENSOR_PLL_ENABLE
-    {0x0025,0x00},
-#else
-    {0x0025,0x80},
-#endif
-
-{0x0026,0x87},
-{0x0027,0x10},//0x30},
+//{0x000f,0x18},//add by gjt to change frame rate
+{0x0023,0xba},  //0xcb->0xba 
 {0x0040,0x20},
 {0x0053,0x0A},
 {0x0044,0x06},
@@ -125,7 +121,7 @@ static struct rk_sensor_reg sensor_init_data[] = {
 {0x004A,0x0A},
 {0x004B,0x72},
 {0x0075,0x01},
-{0x002A,0x1F},
+{0x002A,0x2F},
 {0x0070,0x5F},
 {0x0071,0xFF},
 {0x0072,0x55},
@@ -133,7 +129,7 @@ static struct rk_sensor_reg sensor_init_data[] = {
 {0x0080,0xC8},
 {0x0082,0xA2},
 {0x0083,0xF0},
-{0x0085,0x11},//0x12 <lpz 2012.10.24>HMAX 原厂建议 ADC POWER 以前是75%的现在要设定成100%
+{0x0085,0x11},
 {0x0086,0x02},
 {0x0087,0x80},
 {0x0088,0x6C},
@@ -395,23 +391,12 @@ static struct rk_sensor_reg sensor_init_data[] = {
 {0x038B,0x08},
 {0x038C,0xC1},
 {0x038E,0x44},
-
-#if SENSOR_PLL_ENABLE
-    //10 fps
-    {0x038F,0x07},
-    {0x0390,0x5c},
-#else
-    #if SENSOR_FAST_MODE
-       //10 fps
-       {0x038F,0x03},
-       {0x0390,0xae},
-    #else 
-        //7.5 fps
-       {0x038F,0x04}, //09
-       {0x0390,0xE8}, //18
-   #endif
-#endif
-
+{0x038F,0x02},
+{0x0390,0x5c},
+//{0x038F,0x03},
+//{0x0390,0xae},
+{0x038F,0x04}, //09
+{0x0390,0xE8}, //18
 {0x0391,0x05},
 {0x0393,0x80},
 {0x0395,0x21},
@@ -502,10 +487,14 @@ static struct rk_sensor_reg sensor_init_data[] = {
 {0x04B3,0x10},
 {0x04B1,0x8E},
 {0x04B4,0x20},
+//{0x0540,0x00},
+//{0x0541,0x60},//9D
+//{0x0542,0x00},
+//{0x0543,0x73},//BC
 {0x0540,0x00},
-{0x0541,0x60},//9D
+{0x0541,0x9D},//9D
 {0x0542,0x00},
-{0x0543,0x73},//BC
+{0x0543,0xBC},//BC
 {0x0580,0x01},
 {0x0581,0x0F},
 {0x0582,0x04},
@@ -664,6 +653,7 @@ static struct rk_sensor_reg sensor_fullres_lowfps_data[] ={
 };
 /* Senor full resolution setting: recommand for video */
 static struct rk_sensor_reg sensor_fullres_highfps_data[] ={
+
 	SensorEnd
 };
 /* Preview resolution setting*/
