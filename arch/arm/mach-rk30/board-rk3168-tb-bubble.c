@@ -52,6 +52,10 @@
 #include <plat/efuse.h>
 #include <plat/ddr.h>
 
+#ifdef CONFIG_RK_REMOTECTL
+#include <mach/remotectl.h>
+#endif
+
 #ifdef CONFIG_MFD_RT5025
 #include <linux/mfd/rt5025.h>
 #endif
@@ -1234,6 +1238,28 @@ static struct cw_bat_platform_data cw_bat_platdata = {
 };
 
 #endif
+#ifdef CONFIG_RK_REMOTECTL
+
+void rk30_remotectl_iomux(void)
+{
+	;
+}
+
+struct RKxx_remotectl_platform_data rk30_remotectl_pdata = {
+    .gpio	=   RK30_PIN2_PD5,
+    .wakeup	= 1,
+    .rep    = 0,
+    .set_iomux = rk30_remotectl_iomux,
+};
+
+static struct platform_device rk30_device_remotectl = {
+	.name		= "rkxx-remotectl",
+	.id		= -1,
+	.dev		= {
+		.platform_data	= &rk30_remotectl_pdata,
+	},
+};
+#endif
 #ifdef CONFIG_RK30_PWM_REGULATOR
 static int pwm_voltage_map[] = {
 	800000,825000,850000, 875000,900000, 925000 ,950000, 975000,1000000, 1025000, 1050000, 1075000, 1100000, 1125000, 1150000, 1175000, 1200000, 1225000, 1250000, 1275000, 1300000, 1325000, 1350000,1375000
@@ -1535,6 +1561,9 @@ static struct platform_device *devices[] __initdata = {
 #endif
 #ifdef CONFIG_RFKILL_RK
 	&device_rfkill_rk,
+#endif
+#ifdef CONFIG_RK_REMOTECTL	
+    &rk30_device_remotectl,
 #endif
 #ifdef CONFIG_GPS_RK
 	&rk_device_gps,
