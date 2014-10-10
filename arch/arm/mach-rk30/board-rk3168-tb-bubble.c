@@ -2453,7 +2453,45 @@ static void __init rk30_i2c_register_board_info(void)
 // ========== Begin of rk3168 top board keypad defination ============
 
 #include <plat/key.h>
-
+//added by tiny_pi for bubble keyboard
+#if 1
+static struct rk29_keys_button key_button[] = {
+        {
+                .desc   = "vol+",
+                .code   = KEY_VOLUMEUP,
+                .adc_value      = 3,
+                .gpio = INVALID_GPIO,
+                .active_low = PRESS_LEV_LOW,
+        },
+        {
+                .desc   = "vol-",
+                .code   = KEY_VOLUMEDOWN,
+                        .adc_value      = 461, //adc_value = voltage / adc_pin_max_voltage * (3FF + 1)
+                .gpio   = INVALID_GPIO,
+                .active_low = PRESS_LEV_LOW,
+        },
+        {
+                .desc   = "brightness+",
+                .code   = KEY_BRIGHTNESSUP,
+                .adc_value      = 660,
+                .gpio = INVALID_GPIO,
+                .active_low = PRESS_LEV_LOW,
+        },          {
+                .desc   = "brightness-",
+                .code   = KEY_BRIGHTNESSDOWN,
+                .adc_value      = 762,
+                .gpio = INVALID_GPIO,
+                .active_low = PRESS_LEV_LOW,
+        },
+        {
+                .desc   = "power",
+                .code   = KEY_POWER,
+                .gpio   = RK30_PIN0_PA4,
+                .active_low = PRESS_LEV_LOW,
+                .wakeup = 1,
+        },
+};
+#else
 static struct rk29_keys_button key_button[] = {
         {
                 .desc   = "vol-",
@@ -2505,6 +2543,7 @@ static struct rk29_keys_button key_button[] = {
 		.active_low = PRESS_LEV_LOW,
 	},
 };
+#endif
 struct rk29_keys_platform_data rk29_keys_pdata = {
 	.buttons	= key_button,
 	.nbuttons	= ARRAY_SIZE(key_button),
