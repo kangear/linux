@@ -1246,7 +1246,7 @@ void rk30_remotectl_iomux(void)
 }
 
 struct RKxx_remotectl_platform_data rk30_remotectl_pdata = {
-    .gpio	=   RK30_PIN2_PD5,
+    .gpio	=   RK30_PIN0_PA6, //RK30_PIN2_PD5,
     .wakeup	= 1,
     .rep    = 0,
     .set_iomux = rk30_remotectl_iomux,

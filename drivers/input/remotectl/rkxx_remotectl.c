@@ -91,7 +91,7 @@ struct rkxx_remotectl_drvdata {
 
 
 
-//ÌØÊâ¹¦ÄÜ¼üÖµ¶¨Òå
+//ç‰¹æ®ŠåŠŸèƒ½é”®å€¼å®šä¹‰
     //193      //photo
     //194      //video
     //195      //music
@@ -178,6 +178,18 @@ static struct rkxx_remote_key_table remote_key_table_ff[] = {
     {0xa1, 186},          //zoom in
 };
 
+static struct rkxx_remote_key_table remote_key_table_bubble[] = {
+    {0x40, KEY_POWER},     //power off
+    {0x08, KEY_ENTER},
+    {0x38, KEY_BACK},
+    {0x00, KEY_UP},
+    {0x10, KEY_DOWN},
+    {0x18, KEY_LEFT},
+    {0x09, KEY_RIGHT},
+    {0x01, KEY_VOLUMEDOWN},
+    {0x28, KEY_VOLUMEUP},
+    {0x52, 183},
+};
 extern suspend_state_t get_suspend_state(void);
 
 
@@ -196,10 +208,9 @@ static struct rkxx_remotectl_button remotectl_button[] =
     {  
        .usercode = 0xff, 
        .nbuttons =  16, 
-       .key_table = &remote_key_table_ff[0],
+       .key_table = &remote_key_table_bubble[0], //remote_key_table_ff
     },
 };
-
 
 static int remotectl_keybdNum_lookup(struct rkxx_remotectl_drvdata *ddata)
 {	
@@ -218,7 +229,7 @@ static int remotectl_keybdNum_lookup(struct rkxx_remotectl_drvdata *ddata)
 static int remotectl_keycode_lookup(struct rkxx_remotectl_drvdata *ddata)
 {	
     int i;	
-    unsigned char keyData = ((ddata->scanData >> 8) & 0xff);
+    unsigned char keyData = ((ddata->scanData /*>> 8*/) & 0xff);
 
     for (i = 0; i < remotectl_button[ddata->keybdNum].nbuttons; i++){
         if (remotectl_button[ddata->keybdNum].key_table[i].scanCode == keyData){			
@@ -260,15 +271,15 @@ static void remotectl_do_something(unsigned long  data)
         
         case RMC_USERCODE:
         {
-            ddata->scanData <<= 1;
+            ddata->scanData >>= 1;
             ddata->count ++;
 
             if ((TIME_BIT1_MIN < ddata->period) && (ddata->period < TIME_BIT1_MAX)){
-                ddata->scanData |= 0x01;
+                ddata->scanData |= 0x8000;
             }
 
             if (ddata->count == 0x10){//16 bit user code
-               //printk("u=0x%x\n",((ddata->scanData)&0xFFFF));
+                printk("u=0x%x\n",((ddata->scanData)&0xFFFF));
                 if (remotectl_keybdNum_lookup(ddata)){
                     ddata->state = RMC_GETDATA;
                     ddata->scanData = 0;
@@ -283,25 +294,24 @@ static void remotectl_do_something(unsigned long  data)
         case RMC_GETDATA:
         {
             ddata->count ++;
-            ddata->scanData <<= 1;
+            ddata->scanData >>= 1;
 
           
             if ((TIME_BIT1_MIN < ddata->period) && (ddata->period < TIME_BIT1_MAX)){
-                ddata->scanData |= 0x01;
+                ddata->scanData |= 0x8000;
             }           
             if (ddata->count == 0x10){
-               printk(KERN_ERR "d=%x\n", ((ddata->scanData >> 8) & 0xff));
+                printk(KERN_ERR "d=%x\n", ddata->scanData);
 
                 if ((ddata->scanData&0x0ff) == ((~ddata->scanData >> 8)&0x0ff)){
                     if (remotectl_keycode_lookup(ddata)){
                         ddata->press = 1;
-                         if (get_suspend_state()==0){
-                                input_event(ddata->input, EV_KEY, ddata->keycode, 1);
-                                input_sync(ddata->input);
-                            }else if ((get_suspend_state())&&(ddata->keycode==KEY_POWER)){
-                                input_event(ddata->input, EV_KEY, KEY_WAKEUP, 1);
-                                input_sync(ddata->input);
-                            }
+                        if (ddata->keycode==KEY_POWER || get_suspend_state()==PM_SUSPEND_ON){
+                            input_event(ddata->input, EV_KEY, ddata->keycode, 1);
+                            input_sync(ddata->input);
+                        }else{
+                            printk(KERN_ERR "remotectl state is not PM_SUSPEND_ON %s\n", __func__);
+                        }
                         //input_event(ddata->input, EV_KEY, ddata->keycode, ddata->press);
 		                //input_sync(ddata->input);
                         ddata->state = RMC_SEQUENCE;
