@@ -104,6 +104,10 @@
 #endif
 #include "board-rk3168-tb-camera.c"
 
+#if defined (CONFIG_RK_HEADSET_DET) || defined (CONFIG_RK_HEADSET_IRQ_HOOK_ADC_DET)
+#include "../../../drivers/headset_observe/rk_headset.h"
+#endif
+
 #if defined(CONFIG_TOUCHSCREEN_GT8XX)
 #define TOUCH_RESET_PIN  RK30_PIN0_PB6
 #define TOUCH_PWR_PIN    RK30_PIN0_PC5   // need to fly line by hardware engineer
@@ -791,7 +795,7 @@ static struct rk616_platform_data rk616_pdata = {
 	.lvds_ch_nr = 1,		//the number of used lvds channel  
 	.hdmi_irq = RK30_PIN2_PD6,
 	.spk_ctl_gpio = RK30_PIN2_PD7,
-	.hp_ctl_gpio = RK30_PIN2_PD7,
+	.hp_ctl_gpio = INVALID_GPIO,
 };
 #endif
 
@@ -1260,6 +1264,37 @@ static struct platform_device rk30_device_remotectl = {
 	},
 };
 #endif
+#if defined (CONFIG_RK_HEADSET_DET) || defined (CONFIG_RK_HEADSET_IRQ_HOOK_ADC_DET)
+
+static int rk_headset_io_init(int gpio)
+{
+	int ret;
+	ret = gpio_request(gpio, "headset_input");
+	if(ret)
+		return ret;
+
+	//rk30_mux_api_set(iomux_name, iomux_mode);
+	gpio_pull_updown(gpio, PullDisable);
+	gpio_direction_input(gpio);
+	return 0;
+};
+
+struct rk_headset_pdata rk_headset_info = {
+	.Headset_gpio		= RK30_PIN0_PB1,//RK30_PIN0_PD3,
+	.headset_in_type = HEADSET_IN_HIGH,
+	.Hook_adc_chn = 2,
+	.hook_key_code = KEY_MEDIA,
+	.headset_io_init = rk_headset_io_init,
+};
+
+struct platform_device rk_device_headset = {
+		.name	= "rk_headsetdet",
+		.id 	= 0,
+		.dev    = {
+		    .platform_data = &rk_headset_info,
+		}
+};
+#endif
 #ifdef CONFIG_RK30_PWM_REGULATOR
 static int pwm_voltage_map[] = {
 	800000,825000,850000, 875000,900000, 925000 ,950000, 975000,1000000, 1025000, 1050000, 1075000, 1100000, 1125000, 1150000, 1175000, 1200000, 1225000, 1250000, 1275000, 1300000, 1325000, 1350000,1375000
@@ -1564,6 +1599,9 @@ static struct platform_device *devices[] __initdata = {
 #endif
 #ifdef CONFIG_RK_REMOTECTL	
     &rk30_device_remotectl,
+#endif
+#if defined (CONFIG_RK_HEADSET_DET) ||  defined (CONFIG_RK_HEADSET_IRQ_HOOK_ADC_DET)
+    &rk_device_headset,
 #endif
 #ifdef CONFIG_GPS_RK
 	&rk_device_gps,
