@@ -207,7 +207,9 @@ static struct rkxx_remotectl_button remotectl_button[] =
     },
     {  
        .usercode = 0xff, 
-       .nbuttons =  16, 
+       .nbuttons =  10, //Attention:
+                        // There will be wild pointer
+                        // if nbuttons > remote_key_table_bubble.length.
        .key_table = &remote_key_table_bubble[0], //remote_key_table_ff
     },
 };
@@ -279,7 +281,7 @@ static void remotectl_do_something(unsigned long  data)
             }
 
             if (ddata->count == 0x10){//16 bit user code
-                printk("u=0x%x\n",((ddata->scanData)&0xFFFF));
+                //printk("u=0x%x\n",((ddata->scanData)&0xFFFF));
                 if (remotectl_keybdNum_lookup(ddata)){
                     ddata->state = RMC_GETDATA;
                     ddata->scanData = 0;
@@ -301,11 +303,15 @@ static void remotectl_do_something(unsigned long  data)
                 ddata->scanData |= 0x8000;
             }           
             if (ddata->count == 0x10){
-                printk(KERN_ERR "d=%x\n", ddata->scanData);
+                //printk(KERN_ERR "d=%x\n", ddata->scanData);
 
                 if ((ddata->scanData&0x0ff) == ((~ddata->scanData >> 8)&0x0ff)){
                     if (remotectl_keycode_lookup(ddata)){
                         ddata->press = 1;
+#ifdef CONFIG_ANDROID // Android OS needs input event whatever suspend state
+                        input_event(ddata->input, EV_KEY, ddata->keycode, 1);
+                        input_sync(ddata->input);
+#else
                         if (ddata->keycode==KEY_POWER || get_suspend_state()==PM_SUSPEND_ON){
                             input_event(ddata->input, EV_KEY, ddata->keycode, 1);
                             input_sync(ddata->input);
@@ -314,6 +320,7 @@ static void remotectl_do_something(unsigned long  data)
                         }
                         //input_event(ddata->input, EV_KEY, ddata->keycode, ddata->press);
 		                //input_sync(ddata->input);
+#endif // CONFIG_ANDROID
                         ddata->state = RMC_SEQUENCE;
                     }else{
                         ddata->state = RMC_PRELOAD;
@@ -437,6 +444,10 @@ static void remotectl_timer(unsigned long _data)
     if(ddata->press != ddata->pre_press) {
         ddata->pre_press = ddata->press = 0;
 
+#ifdef CONFIG_ANDROID // Android OS needs input event whatever suspend state
+        input_event(ddata->input, EV_KEY, ddata->keycode, 0);
+        input_sync(ddata->input);
+#else
         if (get_suspend_state()==0){
             //input_event(ddata->input, EV_KEY, ddata->keycode, 1);
             //input_sync(ddata->input);
@@ -448,6 +459,7 @@ static void remotectl_timer(unsigned long _data)
             input_event(ddata->input, EV_KEY, KEY_WAKEUP, 0);
             input_sync(ddata->input);
         }
+#endif // CONFIG_ANDROID
     }
 #ifdef CONFIG_PM
     remotectl_wakeup(_data);
