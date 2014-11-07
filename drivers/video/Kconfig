@@ -1939,6 +1939,12 @@ config FB_S3C2410_W320240
 	help
 	  3.5 inch 320X240 TFT Landscape LCD
 
+config FB_S3C2410_H480272
+	boolean "4.3 inch 480X272 H-LCD"
+	depends on FB_S3C2410
+	help
+	   4.3 inch 480x272 H-LCD
+
 config FB_S3C2410_T240320
 	boolean "3.5 inch 240X320 Toppoly LCD"
 	depends on FB_S3C2410
@@ -1970,16 +1976,34 @@ config FB_S3C2410_TFT640480
 	   8 inch 640X480 LCD
 
 config FB_S3C2410_TFT800480
-	boolean "7 inch 800x480 TFT LCD"
+	boolean "A70 800x480 TFT LCD"
 	depends on FB_S3C2410
 	help
-	   7 inch 800x480 TFT LCD
+	   A70 800x480 TFT LCD
+
+config FB_S3C2410_TFT800480_S70
+	boolean "S70 800x480 TFT LCD"
+	depends on FB_S3C2410
+	help
+	   S70 800x480 TFT LCD
 
 config FB_S3C2410_VGA1024768
 	boolean "VGA 1024x768"
 	depends on FB_S3C2410
 	help
 	   VGA 1024x768
+
+config FB_S3C2410_VGA800600
+	boolean "VGA 800600"
+	depends on FB_S3C2410
+	help
+	   VGA 800x600
+
+config FB_S3C2410_VGA640480
+	boolean "VGA 640480"
+	depends on FB_S3C2410
+	help
+	   VGA 640x480
 
 endchoice
 
