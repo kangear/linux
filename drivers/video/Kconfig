@@ -1939,11 +1939,23 @@ config FB_S3C2410_W320240
 	help
 	  3.5 inch 320X240 TFT Landscape LCD
 
+config FB_S3C2410_P320240
+	boolean "3.5 inch 320X240 TFT Landscape LCD(P35)"
+	depends on FB_S3C2410
+	help
+	  3.5 inch 320X240 TFT Landscape LCD(P35)
+
 config FB_S3C2410_H480272
 	boolean "4.3 inch 480X272 H-LCD"
 	depends on FB_S3C2410
 	help
 	   4.3 inch 480x272 H-LCD
+
+config FB_S3C2410_P480272
+	boolean "4.3 inch 480X272 LCD(P43)"
+	depends on FB_S3C2410
+	help
+	   4.3 inch 480x272 LCD(P43)
 
 config FB_S3C2410_T240320
 	boolean "3.5 inch 240X320 Toppoly LCD"

@@ -132,6 +132,21 @@ static struct s3c2410_uartcfg mini2440_uartcfgs[] __initdata = {
 
 #define LCD_CON5 (S3C2410_LCDCON5_FRM565 | S3C2410_LCDCON5_INVVFRAME | S3C2410_LCDCON5_INVVLINE | S3C2410_LCDCON5_HWSWP ) 
 
+#elif defined(CONFIG_FB_S3C2410_P320240)
+#define LCD_WIDTH 320
+#define LCD_HEIGHT 240
+#define LCD_PIXCLOCK 170000
+
+#define LCD_RIGHT_MARGIN 0x5
+#define LCD_LEFT_MARGIN 0x0C
+#define LCD_HSYNC_LEN 0x01
+
+#define LCD_UPPER_MARGIN 9
+#define LCD_LOWER_MARGIN 1
+#define LCD_VSYNC_LEN 2
+
+#define LCD_CON5 (S3C2410_LCDCON5_FRM565 | S3C2410_LCDCON5_INVVCLK | S3C2410_LCDCON5_INVVFRAME | S3C2410_LCDCON5_INVVLINE | S3C2410_LCDCON5_HWSWP ) 
+
 #elif defined(CONFIG_FB_S3C2410_H480272)
 
 #define LCD_WIDTH 480
@@ -144,6 +159,20 @@ static struct s3c2410_uartcfg mini2440_uartcfgs[] __initdata = {
 
 #define LCD_UPPER_MARGIN 0x08
 #define LCD_LOWER_MARGIN 0x08
+#define LCD_VSYNC_LEN 0x01
+
+#elif defined(CONFIG_FB_S3C2410_P480272)
+
+#define LCD_WIDTH 480
+#define LCD_HEIGHT 272
+#define LCD_PIXCLOCK 100000
+
+#define LCD_RIGHT_MARGIN 0x27
+#define LCD_LEFT_MARGIN 0x03
+#define LCD_HSYNC_LEN 0x01
+
+#define LCD_UPPER_MARGIN 0x08
+#define LCD_LOWER_MARGIN 0x09
 #define LCD_VSYNC_LEN 0x01
 
 #elif defined(CONFIG_FB_S3C2410_N480272)
@@ -285,8 +314,8 @@ static struct s3c2410fb_display mini2440_lcd_cfg __initdata = {
 
 	.type		= S3C2410_LCDCON1_TFT,
 
-	.width		= LCD_WIDTH,
-	.height		= LCD_HEIGHT,
+	.width		= 0,
+	.height		= 0,
 
 	.pixclock	= LCD_PIXCLOCK,
 	.xres		= LCD_WIDTH,
