@@ -43,6 +43,12 @@
 #include <plat/cpu.h>
 #include <plat/samsung-time.h>
 
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/nand.h>
+#include <linux/mtd/nand_ecc.h>
+#include <linux/mtd/partitions.h>
+#include <linux/platform_data/mtd-nand-s3c2410.h>
+
 #include "common.h"
 #include "common-smdk.h"
 
@@ -148,12 +154,63 @@ static struct s3c2410fb_mach_info mini2440_fb_info __initdata = {
 	.lpcsel		= ((0xCE6) & ~7) | 1<<4,
 };
 
+static struct mtd_partition friendly_arm_default_nand_part[] = {
+	[0] = {
+		.name	= "supervivi",
+		.size	= 0x00040000,
+		.offset	= 0,
+	},
+	[1] = {
+		.name	= "param",
+		.offset = 0x00040000,
+		.size	= 0x00020000,
+	},
+	[2] = {
+		.name	= "Kernel",
+		.offset = 0x00060000,
+		.size	= 0x00500000,
+	},
+	[3] = {
+		.name	= "root",
+		.offset = 0x00560000,
+		.size	= 1024 * 1024 * 1024, //
+	},
+	[4] = {
+		.name	= "nand",
+		.offset = 0x00000000,
+		.size	= 1024 * 1024 * 1024, //
+	}
+};
+
+static struct s3c2410_nand_set friendly_arm_nand_sets[] = {
+	[0] = {
+		.name		= "NAND",
+		.nr_chips	= 1,
+		.nr_partitions	= ARRAY_SIZE(friendly_arm_default_nand_part),
+		.partitions	= friendly_arm_default_nand_part,
+	},
+};
+
+/* choose a set of timings which should suit most 512Mbit
+ * chips and beyond.
+*/
+
+static struct s3c2410_platform_nand friendly_arm_nand_info = {
+	.tacls		= 20,
+	.twrph0		= 60,
+	.twrph1		= 20,
+	.nr_sets	= ARRAY_SIZE(friendly_arm_nand_sets),
+	.sets		= friendly_arm_nand_sets,
+	.ignore_unset_ecc = 1,
+};
+
 static struct platform_device *mini2440_devices[] __initdata = {
 	&s3c_device_ohci,
 	&s3c_device_lcd,
 	&s3c_device_wdt,
 	&s3c_device_i2c0,
 	&s3c_device_iis,
+	&s3c_device_nand,
 };
 
 static void __init mini2440_map_io(void)
@@ -168,7 +225,7 @@ static void __init mini2440_machine_init(void)
 {
 	s3c24xx_fb_set_platdata(&mini2440_fb_info);
 	s3c_i2c0_set_platdata(NULL);
-
+	s3c_device_nand.dev.platform_data = &friendly_arm_nand_info;
 	platform_add_devices(mini2440_devices, ARRAY_SIZE(mini2440_devices));
 	//smdk_machine_init();
 }
