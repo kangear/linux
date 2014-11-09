@@ -265,6 +265,7 @@ static struct platform_device *mini2440_devices[] __initdata = {
 	&s3c_device_iis,
 	&s3c_device_nand,
 	&mini2440_device_eth,
+	&s3c_device_rtc,
 };
 
 static void __init mini2440_map_io(void)
