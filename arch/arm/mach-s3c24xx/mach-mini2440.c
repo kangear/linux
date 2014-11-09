@@ -49,6 +49,9 @@
 #include <linux/mtd/partitions.h>
 #include <linux/platform_data/mtd-nand-s3c2410.h>
 
+#include <linux/dm9000.h>
+#include "regs-mem.h"
+
 #include "common.h"
 #include "common-smdk.h"
 
@@ -204,6 +207,56 @@ static struct s3c2410_platform_nand friendly_arm_nand_info = {
 	.ignore_unset_ecc = 1,
 };
 
+/* DM9000AEP 10/100 ethernet controller */
+#define MACH_MINI2440_DM9K_BASE (S3C2410_CS4 + 0x300)
+
+static struct resource mini2440_dm9k_resource[] = {
+        [0] = {
+                .start = MACH_MINI2440_DM9K_BASE,
+                .end   = MACH_MINI2440_DM9K_BASE + 3,
+                .flags = IORESOURCE_MEM
+        },
+        [1] = {
+                .start = MACH_MINI2440_DM9K_BASE + 4,
+                .end   = MACH_MINI2440_DM9K_BASE + 7,
+                .flags = IORESOURCE_MEM
+        },
+        [2] = {
+                .start = IRQ_EINT7,
+                .end   = IRQ_EINT7,
+                .flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
+        }
+};
+
+/*
+ *  * The DM9000 has no eeprom, and it's MAC address is set by
+ *   * the bootloader before starting the kernel.
+ *    */
+static struct dm9000_plat_data mini2440_dm9k_pdata = {
+        .flags          = (DM9000_PLATF_16BITONLY | DM9000_PLATF_NO_EEPROM),
+};
+
+static struct platform_device mini2440_device_eth = {
+        .name           = "dm9000",
+        .id             = -1,
+        .num_resources  = ARRAY_SIZE(mini2440_dm9k_resource),
+        .resource       = mini2440_dm9k_resource,
+        .dev            = {
+                .platform_data  = &mini2440_dm9k_pdata,
+        },
+};
+
+static void mini2440_dm9000_init(void)
+{
+	/* bank 4 configurations */
+	#define S3C2410_BWSCON_DW4_8	(0<<16)
+	#define S3C2410_BWSCON_DW4_16	(1<<16)
+	#define S3C2410_BWSCON_DW4_32	(2<<16)
+	#define S3C2410_BWSCON_WS4	(1<<18)
+	writel((readl(S3C2410_BWSCON) & 0xFFF0FFFF) | S3C2410_BWSCON_DW4_16 | S3C2410_BWSCON_WS4 | S3C2410_BWSCON_ST4, S3C2410_BWSCON);
+	writel(0x1F7C, S3C2410_BANKCON4);
+}
+
 static struct platform_device *mini2440_devices[] __initdata = {
 	&s3c_device_ohci,
 	&s3c_device_lcd,
@@ -211,6 +264,7 @@ static struct platform_device *mini2440_devices[] __initdata = {
 	&s3c_device_i2c0,
 	&s3c_device_iis,
 	&s3c_device_nand,
+	&mini2440_device_eth,
 };
 
 static void __init mini2440_map_io(void)
@@ -226,6 +280,7 @@ static void __init mini2440_machine_init(void)
 	s3c24xx_fb_set_platdata(&mini2440_fb_info);
 	s3c_i2c0_set_platdata(NULL);
 	s3c_device_nand.dev.platform_data = &friendly_arm_nand_info;
+	mini2440_dm9000_init();
 	platform_add_devices(mini2440_devices, ARRAY_SIZE(mini2440_devices));
 	//smdk_machine_init();
 }
