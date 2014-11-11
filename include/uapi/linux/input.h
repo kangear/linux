@@ -32,7 +32,11 @@ struct input_event {
  * Protocol version.
  */
 
+#ifdef CONFIG_MACH_MINI2440     /* TODO:update tslib then reset this file. */
+#define EV_VERSION		0x010000
+#else
 #define EV_VERSION		0x010001
+#endif
 
 /*
  * IOCTLs (0x00 - 0x7f)
