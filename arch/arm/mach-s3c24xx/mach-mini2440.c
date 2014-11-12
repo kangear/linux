@@ -51,6 +51,9 @@
 
 #include <linux/dm9000.h>
 #include "regs-mem.h"
+#include <linux/mmc/host.h>
+#include <linux/platform_data/mmc-s3cmci.h>
+#include <mach/gpio.h>
 
 #include "common.h"
 #include "common-smdk.h"
@@ -460,6 +463,15 @@ static void mini2440_dm9000_init(void)
 	writel(0x1F7C, S3C2410_BANKCON4);
 }
 
+/* MMC/SD  */
+
+static struct s3c24xx_mci_pdata mini2440_mmc_cfg = {
+   .gpio_detect   = S3C2410_GPG(8),
+   .gpio_wprotect = S3C2410_GPH(8),
+   .set_power     = NULL,
+   .ocr_avail     = MMC_VDD_32_33|MMC_VDD_33_34,
+};
+
 static struct platform_device *mini2440_devices[] __initdata = {
 	&s3c_device_ohci,
 	&s3c_device_lcd,
@@ -469,6 +481,7 @@ static struct platform_device *mini2440_devices[] __initdata = {
 	&s3c_device_nand,
 	&mini2440_device_eth,
 	&s3c_device_rtc,
+	&s3c_device_sdi,
 };
 
 static void __init mini2440_map_io(void)
@@ -485,6 +498,7 @@ static void __init mini2440_machine_init(void)
 	s3c_i2c0_set_platdata(NULL);
 	s3c_device_nand.dev.platform_data = &friendly_arm_nand_info;
 	mini2440_dm9000_init();
+	s3c_device_sdi.dev.platform_data = &mini2440_mmc_cfg;
 	platform_add_devices(mini2440_devices, ARRAY_SIZE(mini2440_devices));
 	//smdk_machine_init();
 }
