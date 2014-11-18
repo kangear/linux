@@ -476,12 +476,12 @@ static struct platform_device *mini2440_devices[] __initdata = {
 	&s3c_device_ohci,
 	&s3c_device_lcd,
 	&s3c_device_wdt,
-	&s3c_device_i2c0,
 	&s3c_device_iis,
 	&s3c_device_nand,
 	&mini2440_device_eth,
 	&s3c_device_rtc,
 	&s3c_device_sdi,
+	&s3c_device_i2c0,
 };
 
 static void __init mini2440_map_io(void)
