@@ -64,3 +64,4 @@ js-rtc-y = rtc.o
 obj-$(CONFIG_TILE_SROM)		+= tile-srom.o
 obj-$(CONFIG_MINI2440_ADC)	+= mini2440_adc.o
 obj-$(CONFIG_LEDS_MINI2440)	+= mini2440_leds.o
+obj-$(CONFIG_MINI2440_BUTTONS)	+= mini2440_buttons.o
