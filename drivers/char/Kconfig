@@ -15,6 +15,14 @@ config DEVKMEM
 	  kind of kernel debugging operations.
 	  When in doubt, say "N".
 
+config LEDS_MINI2440
+	tristate "LED Support for Mini2440 GPIO LEDs"
+	depends on MACH_MINI2440
+	default y if MACH_MINI2440
+	help
+	  This option enables support for LEDs connected to GPIO lines
+	  on Mini2440 boards.
+
 config MINI2440_ADC
 	bool "ADC driver for FriendlyARM Mini2440 development boards"
 	depends on MACH_MINI2440
@@ -614,4 +622,3 @@ config TILE_SROM
 	  how to partition a single ROM for multiple purposes.
 
 endmenu
-
