@@ -15,6 +15,13 @@ config DEVKMEM
 	  kind of kernel debugging operations.
 	  When in doubt, say "N".
 
+config MINI2440_HELLO_MODULE
+	tristate "Mini2440 module sample"
+	depends on MACH_MINI2440
+	default m if MACH_MINI2440
+	help
+	  Mini2440 module sample.
+
 config LEDS_MINI2440
 	tristate "LED Support for Mini2440 GPIO LEDs"
 	depends on MACH_MINI2440
