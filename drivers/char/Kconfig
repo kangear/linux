@@ -30,6 +30,13 @@ config MINI2440_BUTTONS
 	help
 	  this is buttons driver for FriendlyARM Mini2440 development boards
 
+config MINI2440_BUZZER
+	tristate "Buzzer driver for FriendlyARM Mini2440 development boards"
+	depends on MACH_MINI2440
+	default y if MACH_MINI2440
+	help
+	  this is buzzer driver for FriendlyARM Mini2440 development boards
+
 config MINI2440_ADC
 	bool "ADC driver for FriendlyARM Mini2440 development boards"
 	depends on MACH_MINI2440
