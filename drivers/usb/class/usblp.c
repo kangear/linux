@@ -1046,8 +1046,13 @@ static const struct file_operations usblp_fops = {
 	.llseek =	noop_llseek,
 };
 
+static struct device_type printer_type = {
+       .name   = "printer",
+};
+
 static char *usblp_devnode(struct device *dev, mode_t *mode)
 {
+	dev->type=&printer_type;
 	return kasprintf(GFP_KERNEL, "usb/%s", dev_name(dev));
 }
 
