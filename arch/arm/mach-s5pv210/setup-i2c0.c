@@ -23,6 +23,11 @@ struct platform_device; /* don't need the contents */
 
 void s3c_i2c0_cfg_gpio(struct platform_device *dev)
 {
+#if defined(CONFIG_MACH_MINI210)
 	s3c_gpio_cfgall_range(S5PV210_GPD1(0), 2,
-			      S3C_GPIO_SFN(2), S3C_GPIO_PULL_UP);
+			S3C_GPIO_SFN(2), S3C_GPIO_PULL_NONE);
+#else
+	s3c_gpio_cfgall_range(S5PV210_GPD1(0), 2,
+			S3C_GPIO_SFN(2), S3C_GPIO_PULL_UP);
+#endif
 }

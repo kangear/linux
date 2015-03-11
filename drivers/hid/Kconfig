@@ -55,6 +55,13 @@ source "drivers/hid/usbhid/Kconfig"
 menu "Special HID drivers"
 	depends on HID
 
+config HID_TIMELINK
+	tristate "TimeLink MultiTouch panel"
+	depends on USB_HID
+	default y
+	---help---
+	Support for ShenZhen TimeLink MultiTouch panel
+
 config HID_A4TECH
 	tristate "A4 tech mice" if EXPERT
 	depends on USB_HID

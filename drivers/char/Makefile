@@ -58,8 +58,19 @@ obj-$(CONFIG_IPMI_HANDLER)	+= ipmi/
 obj-$(CONFIG_HANGCHECK_TIMER)	+= hangcheck-timer.o
 obj-$(CONFIG_TCG_TPM)		+= tpm/
 
+obj-$(CONFIG_DCC_TTY)		+= dcc_tty.o
 obj-$(CONFIG_PS3_FLASH)		+= ps3flash.o
 obj-$(CONFIG_RAMOOPS)		+= ramoops.o
 
 obj-$(CONFIG_JS_RTC)		+= js-rtc.o
 js-rtc-y = rtc.o
+
+obj-$(CONFIG_S3C_MEM)		+= s3c_mem.o
+
+obj-$(CONFIG_MINI210_LEDS)	+= mini210_leds.o
+obj-$(CONFIG_MINI210_HELLO_MODULE)	+= mini210_hello_module.o
+obj-$(CONFIG_MINI210_BUTTONS)	+= mini210_buttons.o
+obj-$(CONFIG_MINI210_BUZZER)	+= mini210_pwm.o
+obj-$(CONFIG_MINI210_ADC)		+= mini210_adc.o
+obj-$(CONFIG_MINI210_BACKLIGHT)	+= mini210_backlight.o
+

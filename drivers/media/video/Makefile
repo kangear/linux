@@ -48,7 +48,19 @@ obj-$(CONFIG_VIDEO_BT866) += bt866.o
 obj-$(CONFIG_VIDEO_KS0127) += ks0127.o
 obj-$(CONFIG_VIDEO_THS7303) += ths7303.o
 obj-$(CONFIG_VIDEO_VINO) += indycam.o
+
+ifeq ($(CONFIG_MACH_MINI210),y)
+ifneq ($(wildcard drivers/media/video/tvp5150_tiny210.c),)
+ifeq ($(FA),1)
+obj-$(CONFIG_VIDEO_TVP5150)	+= tvp5150_tiny210.o
+else
+obj-m += tvp5150_tiny210.o
+endif  #FA
+endif
+else
 obj-$(CONFIG_VIDEO_TVP5150) += tvp5150.o
+endif
+
 obj-$(CONFIG_VIDEO_TVP514X) += tvp514x.o
 obj-$(CONFIG_VIDEO_TVP7002) += tvp7002.o
 obj-$(CONFIG_VIDEO_MSP3400) += msp3400.o
@@ -67,9 +79,18 @@ obj-$(CONFIG_VIDEO_TCM825X) += tcm825x.o
 obj-$(CONFIG_VIDEO_TVEEPROM) += tveeprom.o
 obj-$(CONFIG_VIDEO_MT9V011) += mt9v011.o
 obj-$(CONFIG_VIDEO_MT9V032) += mt9v032.o
+obj-$(CONFIG_VIDEO_S5K4BA)	+= s5k4ba.o
 obj-$(CONFIG_VIDEO_SR030PC30)	+= sr030pc30.o
 obj-$(CONFIG_VIDEO_NOON010PC30)	+= noon010pc30.o
 obj-$(CONFIG_VIDEO_M5MOLS)	+= m5mols/
+
+ifneq ($(wildcard drivers/media/video/ov9650.c),)
+ifeq ($(FA),1)
+obj-$(CONFIG_VIDEO_OV9650)		+= ov9650.o
+else
+obj-m += ov9650.o
+endif  #FA
+endif
 
 obj-$(CONFIG_SOC_CAMERA_IMX074)		+= imx074.o
 obj-$(CONFIG_SOC_CAMERA_MT9M001)	+= mt9m001.o
@@ -169,6 +190,7 @@ obj-$(CONFIG_VIDEO_OMAP1)		+= omap1_camera.o
 
 obj-$(CONFIG_VIDEO_SAMSUNG_S5P_FIMC) 	+= s5p-fimc/
 
+obj-$(CONFIG_VIDEO_SAMSUNG)             += samsung/
 obj-$(CONFIG_ARCH_DAVINCI)		+= davinci/
 
 obj-$(CONFIG_VIDEO_SH_VOU)		+= sh_vou.o

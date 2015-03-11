@@ -17,12 +17,19 @@ obj-y				+= dev-uart.o
 obj-y				+= cpu.o
 obj-y				+= clock.o
 obj-y				+= irq.o
-obj-$(CONFIG_S5P_EXT_INT)	+= irq-eint.o
+obj-y				+= devs.o
+obj-y				+= bootmem.o
+obj-$(CONFIG_S5P_EXT_INT)	+= irq-eint.o irq-eint-group.o
 obj-$(CONFIG_S5P_GPIO_INT)	+= irq-gpioint.o
 obj-$(CONFIG_S5P_SYSTEM_MMU)	+= sysmmu.o
 obj-$(CONFIG_PM)		+= pm.o
 obj-$(CONFIG_PM)		+= irq-pm.o
-obj-$(CONFIG_S5P_HRT) 		+= s5p-time.o
+
+ifdef CONFIG_S5P_HIGH_RES_TIMERS
+obj-$(CONFIG_HRT_RTC)	+= hr-time-rtc.o
+else
+obj-$(CONFIG_S5P_HRT) 	+= s5p-time.o
+endif
 
 # devices
 
@@ -34,4 +41,9 @@ obj-$(CONFIG_S5P_DEV_ONENAND)	+= dev-onenand.o
 obj-$(CONFIG_S5P_DEV_CSIS0)	+= dev-csis0.o
 obj-$(CONFIG_S5P_DEV_CSIS1)	+= dev-csis1.o
 obj-$(CONFIG_S5P_DEV_USB_EHCI)	+= dev-ehci.o
+obj-$(CONFIG_S5P_DEV_USB_OHCI)	+= dev-ohci.o
 obj-$(CONFIG_S5P_SETUP_MIPIPHY)	+= setup-mipiphy.o
+obj-$(CONFIG_S5P_DEV_MFC)	+= dev-mfc.o
+obj-$(CONFIG_S5P_SETUP_MFC)	+= setup-mfc.o
+obj-$(CONFIG_S5P_DEV_USB_HSDEVICE) += dev-hsdevice.o
+

@@ -35,6 +35,7 @@ struct s3c_ac97_info {
 	void __iomem	   *regs;
 	struct mutex       lock;
 	struct completion  done;
+	u32 ac_codec_cmd;
 };
 static struct s3c_ac97_info s3c_ac97;
 
@@ -234,6 +235,9 @@ static int s3c_ac97_hw_params(struct snd_pcm_substream *substream,
 	else
 		dma_data = &s3c_ac97_pcm_in;
 
+	if (params_channels(params) == 1)
+		dma_data->dma_size = 2;
+
 	snd_soc_dai_set_dma_data(cpu_dai, substream, dma_data);
 
 	return 0;
@@ -322,6 +326,18 @@ static int s3c_ac97_mic_trigger(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+static int s3c_ac97_suspend(struct snd_soc_dai *dai)
+{
+	s3c_ac97.ac_codec_cmd = readl(s3c_ac97.regs + S3C_AC97_CODEC_CMD);
+	return 0;
+}
+
+static int s3c_ac97_resume(struct snd_soc_dai *dai)
+{
+	writel(s3c_ac97.ac_codec_cmd, s3c_ac97.regs + S3C_AC97_CODEC_CMD);
+	return 0;
+}
+
 static struct snd_soc_dai_ops s3c_ac97_dai_ops = {
 	.hw_params	= s3c_ac97_hw_params,
 	.trigger	= s3c_ac97_trigger,
@@ -336,15 +352,17 @@ static struct snd_soc_dai_driver s3c_ac97_dai[] = {
 	[S3C_AC97_DAI_PCM] = {
 		.name =	"samsung-ac97",
 		.ac97_control = 1,
+		.suspend = s3c_ac97_suspend,
+		.resume = s3c_ac97_resume,
 		.playback = {
 			.stream_name = "AC97 Playback",
-			.channels_min = 2,
+			.channels_min = 1,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_8000_48000,
 			.formats = SNDRV_PCM_FMTBIT_S16_LE,},
 		.capture = {
 			.stream_name = "AC97 Capture",
-			.channels_min = 2,
+			.channels_min = 1,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_8000_48000,
 			.formats = SNDRV_PCM_FMTBIT_S16_LE,},

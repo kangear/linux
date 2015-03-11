@@ -15,7 +15,11 @@ obj-$(CONFIG_SND_SOC)	+= nuc900/
 obj-$(CONFIG_SND_SOC)	+= omap/
 obj-$(CONFIG_SND_SOC)	+= kirkwood/
 obj-$(CONFIG_SND_SOC)	+= pxa/
+ifneq ($(CONFIG_SND_S5PV2XX_SOC),)
+obj-$(CONFIG_SND_SOC)	+= s5pv2xx/
+else
 obj-$(CONFIG_SND_SOC)	+= samsung/
+endif
 obj-$(CONFIG_SND_SOC)	+= s6000/
 obj-$(CONFIG_SND_SOC)	+= sh/
 obj-$(CONFIG_SND_SOC)	+= tegra/

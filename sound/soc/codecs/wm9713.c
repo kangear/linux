@@ -946,6 +946,28 @@ static int wm9713_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	return 0;
 }
 
+static int wm9713_hifi_hw_params(struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *params,
+				struct snd_soc_dai *dai)
+{
+	struct snd_soc_codec *codec = dai->codec;
+	ac97_write(codec, AC97_POWERDOWN, 0x0000);
+	ac97_write(codec, AC97_PHONE, 0x0808);
+	ac97_write(codec, AC97_EXTENDED_MID, 0xf803);
+	ac97_write(codec, AC97_EXTENDED_MSTATUS, 0xb990);
+
+	ac97_write(codec, AC97_MASTER, 0x8080);
+	ac97_write(codec, AC97_HEADPHONE, 0x0606);
+	ac97_write(codec, AC97_REC_GAIN, 0x00aa);
+#ifdef CONFIG_SOUND_WM9713_INPUT_STREAM_MIC
+	ac97_write(codec, 0x5c, 0x0002);
+	ac97_write(codec, AC97_LINE, 0x0068);
+	ac97_write(codec, AC97_VIDEO, 0xfe00);
+#else
+	ac97_write(codec, AC97_VIDEO, 0xd612);
+#endif
+	return 0;
+}
 static int wm9713_pcm_hw_params(struct snd_pcm_substream *substream,
 				struct snd_pcm_hw_params *params,
 				struct snd_soc_dai *dai)
@@ -1027,6 +1049,7 @@ static int ac97_aux_prepare(struct snd_pcm_substream *substream,
 	 SNDRV_PCM_FORMAT_S24_LE)
 
 static struct snd_soc_dai_ops wm9713_dai_ops_hifi = {
+	.hw_params	= wm9713_hifi_hw_params,
 	.prepare	= ac97_hifi_prepare,
 	.set_clkdiv	= wm9713_set_dai_clkdiv,
 	.set_pll	= wm9713_set_dai_pll,

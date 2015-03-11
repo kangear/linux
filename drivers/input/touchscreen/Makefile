@@ -43,6 +43,7 @@ obj-$(CONFIG_TOUCHSCREEN_S3C2410)	+= s3c2410_ts.o
 obj-$(CONFIG_TOUCHSCREEN_ST1232)	+= st1232.o
 obj-$(CONFIG_TOUCHSCREEN_STMPE)		+= stmpe-ts.o
 obj-$(CONFIG_TOUCHSCREEN_TNETV107X)	+= tnetv107x-ts.o
+obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI)	+= synaptics_i2c_rmi.o
 obj-$(CONFIG_TOUCHSCREEN_TOUCHIT213)	+= touchit213.o
 obj-$(CONFIG_TOUCHSCREEN_TOUCHRIGHT)	+= touchright.o
 obj-$(CONFIG_TOUCHSCREEN_TOUCHWIN)	+= touchwin.o
@@ -60,3 +61,16 @@ obj-$(CONFIG_TOUCHSCREEN_WM97XX_MAINSTONE)	+= mainstone-wm97xx.o
 obj-$(CONFIG_TOUCHSCREEN_WM97XX_ZYLONITE)	+= zylonite-wm97xx.o
 obj-$(CONFIG_TOUCHSCREEN_W90X900)	+= w90p910_ts.o
 obj-$(CONFIG_TOUCHSCREEN_TPS6507X)	+= tps6507x-ts.o
+obj-$(CONFIG_TOUCHSCREEN_EGALAX)        += egalax_i2c.o
+obj-$(CONFIG_TOUCHSCREEN_1WIRE)		+= mini210_1wire_host.o
+obj-$(CONFIG_TOUCHSCREEN_IF)		+= ts-if.o
+obj-$(CONFIG_TOUCHSCREEN_FT5X0X)	+= ft5x06_ts.o
+
+ifneq ($(wildcard drivers/input/touchscreen/goodix_touch.c),)
+ifeq ($(FA),1)
+obj-$(CONFIG_TOUCHSCREEN_GOODIX)	+= goodix_touch.o
+else
+obj-m += goodix_touch.o
+endif  #FA
+endif
+

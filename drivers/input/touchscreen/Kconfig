@@ -177,6 +177,15 @@ config TOUCHSCREEN_EETI
 	  To compile this driver as a module, choose M here: the
 	  module will be called eeti_ts.
 
+config TOUCHSCREEN_EGALAX
+	tristate "eGalax touchscreen panel support"
+	depends on I2C
+	help
+	  Say Y here to enable support for I2C connected eGalax touch panels.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called egalax_i2c.
+
 config TOUCHSCREEN_FUJITSU
 	tristate "Fujitsu serial touchscreen"
 	select SERIO
@@ -201,6 +210,46 @@ config TOUCHSCREEN_S3C2410
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called s3c2410_ts.
+
+config TOUCHSCREEN_1WIRE
+	tristate "Mini210 1-Wire host and Touch Screen Driver"
+	depends on MACH_MINI210
+	help
+	  Say Y here to enable the 1-Wire host and Touch Screen driver for
+	  FriendlyARM Mini210 development board.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called mini210_1wire_host.
+
+config TOUCHSCREEN_IF
+	bool
+	default y if TOUCHSCREEN_1WIRE
+
+config TOUCHSCREEN_GOODIX
+	tristate "Goodix GT80X multi-touch driver"
+	depends on MACH_MINI210
+	help
+	  Say Y here to support Goodix touchscreen whose name is guitar on
+	  FriendlyARM Mini210 development board.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called goodix_touch.ko.
+
+config TOUCHSCREEN_FT5X0X
+	tristate "FocalTech ft5x0x TouchScreen driver"
+	depends on MACH_MINI210
+	help
+	  Say Y here to support FocalTech ft5x0x TouchScreen on
+	  FriendlyARM Mini210 development board.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called ft5x06_ts.ko.
 
 config TOUCHSCREEN_GUNZE
 	tristate "Gunze AHL-51S touchscreen"
@@ -382,6 +431,12 @@ config TOUCHSCREEN_TNETV107X
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called tnetv107x-ts.
+
+config TOUCHSCREEN_SYNAPTICS_I2C_RMI
+	tristate "Synaptics i2c touchscreen"
+	depends on I2C
+	help
+	  This enables support for Synaptics RMI over I2C based touchscreens.
 
 config TOUCHSCREEN_TOUCHRIGHT
 	tristate "Touchright serial touchscreen"

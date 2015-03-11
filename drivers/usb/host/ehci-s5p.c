@@ -14,10 +14,9 @@
 
 #include <linux/clk.h>
 #include <linux/platform_device.h>
-#include <mach/regs-pmu.h>
-#include <plat/cpu.h>
 #include <plat/ehci.h>
 #include <plat/usb-phy.h>
+#include <plat/mphy.h>
 
 struct s5p_ehci_hcd {
 	struct device *dev;
@@ -125,10 +124,19 @@ static int __devinit s5p_ehci_probe(struct platform_device *pdev)
 	if (pdata->phy_init)
 		pdata->phy_init(pdev, S5P_USB_PHY_HOST);
 
+#if defined(CONFIG_MACH_MINI210)
+	s5p_phy_init_ext(PHY_CMD_EHCI, pdev, hcd);
+#endif
+
 	ehci = hcd_to_ehci(hcd);
 	ehci->caps = hcd->regs;
 	ehci->regs = hcd->regs +
 		HC_LENGTH(ehci, readl(&ehci->caps->hc_capbase));
+
+	/* DMA burst Enable */
+#if defined(CONFIG_ARCH_S5PV310)
+	writel(0x03C00000, hcd->regs + 0x90);
+#endif
 
 	dbg_hcs_params(ehci, "reset");
 	dbg_hcc_params(ehci, "reset");
@@ -136,7 +144,9 @@ static int __devinit s5p_ehci_probe(struct platform_device *pdev)
 	/* cache this readonly data; minimize chip reads */
 	ehci->hcs_params = readl(&ehci->caps->hcs_params);
 
-	err = usb_add_hcd(hcd, irq, IRQF_DISABLED | IRQF_SHARED);
+	ehci_reset(ehci);
+
+	err = usb_add_hcd(hcd, irq, IRQF_SHARED);
 	if (err) {
 		dev_err(&pdev->dev, "Failed to add USB HCD\n");
 		goto fail;
@@ -190,6 +200,109 @@ static void s5p_ehci_shutdown(struct platform_device *pdev)
 		hcd->driver->shutdown(hcd);
 }
 
+#ifdef CONFIG_PM
+static int s5p_ehci_suspend(struct device *dev)
+{
+	struct s5p_ehci_hcd *s5p_ehci = dev_get_drvdata(dev);
+	struct usb_hcd *hcd = s5p_ehci->hcd;
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+	struct platform_device *pdev = to_platform_device(dev);
+	struct s5p_ehci_platdata *pdata = pdev->dev.platform_data;
+	unsigned long flags;
+	int rc = 0;
+
+	if (time_before(jiffies, ehci->next_statechange))
+		msleep(20);
+
+	/*
+	 * Root hub was already suspended. Disable irq emission and
+	 * mark HW unaccessible.  The PM and USB cores make sure that
+	 * the root hub is either suspended or stopped.
+	 */
+	ehci_prepare_ports_for_controller_suspend(ehci, device_may_wakeup(dev));
+	spin_lock_irqsave(&ehci->lock, flags);
+	ehci_writel(ehci, 0, &ehci->regs->intr_enable);
+	(void)ehci_readl(ehci, &ehci->regs->intr_enable);
+
+	clear_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags);
+	spin_unlock_irqrestore(&ehci->lock, flags);
+
+	if (pdata && pdata->phy_exit)
+		pdata->phy_exit(pdev, S5P_USB_PHY_HOST);
+
+	return rc;
+}
+
+static int s5p_ehci_resume(struct device *dev)
+{
+	struct s5p_ehci_hcd *s5p_ehci = dev_get_drvdata(dev);
+	struct usb_hcd *hcd = s5p_ehci->hcd;
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+	struct platform_device *pdev = to_platform_device(dev);
+	struct s5p_ehci_platdata *pdata = pdev->dev.platform_data;
+
+	if (pdata && pdata->phy_init)
+		pdata->phy_init(pdev, S5P_USB_PHY_HOST);
+
+#if defined(CONFIG_MACH_MINI210)
+	s5p_phy_init_ext(PHY_CMD_EHCI, pdev, hcd);
+#endif
+
+	/* DMA burst Enable */
+#if defined(CONFIG_ARCH_S5PV310)
+	writel(0x03C00000, hcd->regs + 0x90);
+#endif
+
+	if (time_before(jiffies, ehci->next_statechange))
+		msleep(100);
+
+	/* Mark hardware accessible again as we are out of D3 state by now */
+	set_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags);
+
+	if (ehci_readl(ehci, &ehci->regs->configured_flag) == FLAG_CF) {
+		int	mask = INTR_MASK;
+
+		ehci_prepare_ports_for_controller_resume(ehci);
+		if (!hcd->self.root_hub->do_remote_wakeup)
+			mask &= ~STS_PCD;
+		ehci_writel(ehci, mask, &ehci->regs->intr_enable);
+		ehci_readl(ehci, &ehci->regs->intr_enable);
+		return 0;
+	}
+
+	usb_root_hub_lost_power(hcd->self.root_hub);
+
+	(void) ehci_halt(ehci);
+	(void) ehci_reset(ehci);
+
+	/* emptying the schedule aborts any urbs */
+	spin_lock_irq(&ehci->lock);
+	if (ehci->reclaim)
+		end_unlink_async(ehci);
+	ehci_work(ehci);
+	spin_unlock_irq(&ehci->lock);
+
+	ehci_writel(ehci, ehci->command, &ehci->regs->command);
+	ehci_writel(ehci, FLAG_CF, &ehci->regs->configured_flag);
+	ehci_readl(ehci, &ehci->regs->command);	/* unblock posted writes */
+
+	/* here we "know" root ports should always stay powered */
+	ehci_port_power(ehci, 1);
+
+	hcd->state = HC_STATE_SUSPENDED;
+
+	return 0;
+}
+#else
+#define s5p_ehci_suspend	NULL
+#define s5p_ehci_resume		NULL
+#endif
+
+static const struct dev_pm_ops s5p_ehci_pm_ops = {
+	.suspend	= s5p_ehci_suspend,
+	.resume		= s5p_ehci_resume,
+};
+
 static struct platform_driver s5p_ehci_driver = {
 	.probe		= s5p_ehci_probe,
 	.remove		= __devexit_p(s5p_ehci_remove),
@@ -197,6 +310,7 @@ static struct platform_driver s5p_ehci_driver = {
 	.driver = {
 		.name	= "s5p-ehci",
 		.owner	= THIS_MODULE,
+		.pm	= &s5p_ehci_pm_ops,
 	}
 };
 

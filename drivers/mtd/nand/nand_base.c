@@ -349,6 +349,8 @@ static int nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 
 	page = (int)(ofs >> chip->page_shift) & chip->pagemask;
 
+#if 0
+	/* Moved to nand_block_checkbad() for chip specify support */
 	if (getchip) {
 		chipnr = (int)(ofs >> chip->chip_shift);
 
@@ -357,6 +359,7 @@ static int nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 		/* Select the NAND device */
 		chip->select_chip(mtd, chipnr);
 	}
+#endif
 
 	if (chip->options & NAND_BUSWIDTH_16) {
 		chip->cmdfunc(mtd, NAND_CMD_READOOB, chip->badblockpos & 0xFE,
@@ -376,8 +379,10 @@ static int nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 	else
 		res = hweight8(bad) < chip->badblockbits;
 
+#if 0
 	if (getchip)
 		nand_release_device(mtd);
+#endif
 
 	return res;
 }
@@ -475,9 +480,26 @@ static int nand_block_checkbad(struct mtd_info *mtd, loff_t ofs, int getchip,
 			       int allowbbt)
 {
 	struct nand_chip *chip = mtd->priv;
+	int chipnr, res = 0;
 
-	if (!chip->bbt)
-		return chip->block_bad(mtd, ofs, getchip);
+	/* Chip specify block_bad() support */
+	if (!chip->bbt) {
+		if (getchip) {
+			chipnr = (int)(ofs >> chip->chip_shift);
+
+			nand_get_device(chip, mtd, FL_READING);
+
+			/* Select the NAND device */
+			chip->select_chip(mtd, chipnr);
+		}
+
+		res = chip->block_bad(mtd, ofs, getchip);
+
+		if (getchip)
+			nand_release_device(mtd);
+
+		return res;
+	}
 
 	/* Return info from the table */
 	return nand_isbad_bbt(mtd, ofs, allowbbt);
@@ -2994,23 +3016,15 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 				id_data[0] == NAND_MFR_SAMSUNG &&
 				(chip->cellinfo & NAND_CI_CELLTYPE_MSK) &&
 				id_data[5] != 0x00) {
+			int __oobsz[] = { 0, 128, 218, 400, 436, 512, 640, 0 };
 			/* Calc pagesize */
 			mtd->writesize = 2048 << (extid & 0x03);
 			extid >>= 2;
 			/* Calc oobsize */
-			switch (extid & 0x03) {
-			case 1:
-				mtd->oobsize = 128;
-				break;
-			case 2:
-				mtd->oobsize = 218;
-				break;
-			case 3:
-				mtd->oobsize = 400;
-				break;
-			default:
-				mtd->oobsize = 436;
-				break;
+			if (extid & 0x10) {
+				mtd->oobsize = __oobsz[4 + (extid & 0x3)];
+			} else {
+				mtd->oobsize = __oobsz[(extid & 0x3)];
 			}
 			extid >>= 2;
 			/* Calc blocksize */
@@ -3103,7 +3117,8 @@ ident_done:
 		chip->chip_shift += 32 - 1;
 	}
 
-	chip->badblockbits = 8;
+	if (!chip->badblockbits)
+		chip->badblockbits = 8;
 
 	/* Set the bad block position */
 	if (mtd->writesize > 512 || (busw & NAND_BUSWIDTH_16))
@@ -3216,6 +3231,44 @@ int nand_scan_ident(struct mtd_info *mtd, int maxchips,
 	return 0;
 }
 EXPORT_SYMBOL(nand_scan_ident);
+
+static void nand_panic_wait(struct mtd_info *mtd)
+{
+	struct nand_chip *chip = mtd->priv;
+	int i;
+
+	if (chip->state != FL_READY)
+		for (i = 0; i < 40; i++) {
+			if (chip->dev_ready(mtd))
+				break;
+			mdelay(10);
+		}
+	chip->state = FL_READY;
+}
+
+static int nand_panic_write(struct mtd_info *mtd, loff_t to, size_t len,
+			    size_t *retlen, const u_char *buf)
+{
+	struct nand_chip *chip = mtd->priv;
+	int ret;
+
+	/* Do not allow reads past end of device */
+	if ((to + len) > mtd->size)
+		return -EINVAL;
+	if (!len)
+		return 0;
+
+	nand_panic_wait(mtd);
+
+	chip->ops.len = len;
+	chip->ops.datbuf = (uint8_t *)buf;
+	chip->ops.oobbuf = NULL;
+
+	ret = nand_do_write_ops(mtd, to, &chip->ops);
+
+	*retlen = chip->ops.retlen;
+	return ret;
+}
 
 
 /**
@@ -3460,6 +3513,7 @@ int nand_scan_tail(struct mtd_info *mtd)
 	mtd->panic_write = panic_nand_write;
 	mtd->read_oob = nand_read_oob;
 	mtd->write_oob = nand_write_oob;
+	mtd->panic_write = nand_panic_write;
 	mtd->sync = nand_sync;
 	mtd->lock = NULL;
 	mtd->unlock = NULL;
