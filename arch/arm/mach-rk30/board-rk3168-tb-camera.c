@@ -33,7 +33,64 @@ Comprehensive camera device registration:
                              mclk)\           // sensor input clock rate, 24 or 48
                           
 */
-static struct rkcamera_platform_data new_camera[] = { 
+static struct rkcamera_platform_data new_camera[] = {
+        /*
+	new_camera_device_ex(RK29_CAM_SENSOR_GC2145,
+			front,
+			0,             // sensor orientation
+			INVALID_VALUE, // pwr_io
+			INVALID_VALUE, // pwr_io activity,
+			RK30_PIN3_PB5, // RK30_PIN3_PB5, // rst_io
+			GPIO_LOW,      // GPIO_LOW,      // rst_active
+			RK30_PIN3_PB4, // pwdn_io
+			(CONS(RK29_CAM_SENSOR_GC2145,_PWRDN_ACTIVE)&0x10)|(0x01), // pwdn_active
+			0,      // flash_attach
+			CONS(RK29_CAM_SENSOR_GC2145,_FULL_RESOLUTION), // res
+			0x00,   // mir
+			3,      // i2c_chl
+			100000, // i2c_spd
+			CONS(RK29_CAM_SENSOR_GC2145,_I2C_ADDR),        // i2c_addr
+			0,      // cif_chl
+			24),    // sensor input clock rate, 24 or 48
+	*/
+    new_camera_device_ex(RK29_CAM_SENSOR_GC2155,
+			front,
+			0,             // sensor orientation
+			INVALID_VALUE, // pwr_io
+			INVALID_VALUE, // pwr_io activity,
+			RK30_PIN3_PB5, // RK30_PIN3_PB5, // rst_io
+			GPIO_LOW,      // GPIO_LOW,      // rst_active
+			RK30_PIN3_PB4, // pwdn_io
+			(CONS(RK29_CAM_SENSOR_GC2155,_PWRDN_ACTIVE)&0x10)|(0x01), // pwdn_active
+			0,      // flash_attach
+			CONS(RK29_CAM_SENSOR_GC2155,_FULL_RESOLUTION), // res
+			0x00,   // mir
+			3,      // i2c_chl
+			100000, // i2c_spd
+			CONS(RK29_CAM_SENSOR_GC2155,_I2C_ADDR),        // i2c_addr
+			0,      // cif_chl
+			24),    // sensor input clock rate, 24 or 48
+	/*
+	new_camera_device_ex(RK29_CAM_SENSOR_HM2057,
+			back,
+			0,
+			//RK30_PIN3_PB4,
+			RK30_PIN3_PB5,// pwr_io,����pb4 141
+			1,
+			INVALID_VALUE,//RST
+			INVALID_VALUE,
+			//RK30_PIN3_PB5,
+			RK30_PIN3_PB4,//POWER_D
+			1,
+			0,//FLASH
+			CONS(RK29_CAM_SENSOR_HM2057,_FULL_RESOLUTION),
+			0x00,
+			3,
+			100000,
+			0x48,
+			0,
+			24),
+			/*
     new_camera_device(RK29_CAM_SENSOR_OV5640,
                         back,
                         RK30_PIN3_PB5,
@@ -48,6 +105,7 @@ static struct rkcamera_platform_data new_camera[] = {
                         0,
                         3,
                         0),                        
+    */
     new_camera_device_end  
 };
 /*---------------- Camera Sensor Macro Define Begin  ------------------------*/
@@ -205,21 +263,25 @@ static struct rkcamera_platform_data new_camera[] = {
 
 static void rk_cif_power(struct rk29camera_gpio_res *res,int on)
 {
-	struct regulator *ldo_18,*ldo_28;
+	struct regulator *ldo_18,*ldo_28,*ldo_5;
 	int camera_power = res->gpio_power;
 	  int camera_ioflag = res->gpio_flag;
 	  int camera_io_init = res->gpio_init;
-	  
-	ldo_28 = regulator_get(NULL, "ldo7");	// vcc28_cif
-	ldo_18 = regulator_get(NULL, "ldo1");	// vcc18_cif
+
+	ldo_28 = regulator_get(NULL, "act_ldo8");	// vcc28_cif
+	ldo_18 = regulator_get(NULL, "act_ldo3");	// vcc18_cif
+	ldo_5 = regulator_get(NULL, "act_ldo5");	// vcc18_cif
 	if (ldo_28 == NULL || IS_ERR(ldo_28) || ldo_18 == NULL || IS_ERR(ldo_18)){
 		printk("get cif ldo failed!\n");
 		return;
 		}
 	if(on == 0){
-		while(regulator_is_enabled(ldo_28)>0)	
+		while(regulator_is_enabled(ldo_28)>0)
 			regulator_disable(ldo_28);
 		regulator_put(ldo_28);
+		while(regulator_is_enabled(ldo_5)>0)
+			regulator_disable(ldo_5);
+		regulator_put(ldo_5);
 		while(regulator_is_enabled(ldo_18)>0)
 			regulator_disable(ldo_18);
 		regulator_put(ldo_18);
@@ -232,16 +294,23 @@ static void rk_cif_power(struct rk29camera_gpio_res *res,int on)
 		}
 		}
 	else{
-		regulator_set_voltage(ldo_28, 2800000, 2800000);
-		regulator_enable(ldo_28);
-   //	printk("%s set ldo7 vcc28_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_28));
-		regulator_put(ldo_28);
-
 		regulator_set_voltage(ldo_18, 1800000, 1800000);
 	//	regulator_set_suspend_voltage(ldo, 1800000);
 		regulator_enable(ldo_18);
 	//	printk("%s set ldo1 vcc18_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_18));
 		regulator_put(ldo_18);
+
+		regulator_set_voltage(ldo_5, 1800000, 1800000);
+		//	regulator_set_suspend_voltage(ldo, 1800000);
+		regulator_enable(ldo_5);
+		//	printk("%s set ldo5 vcc18_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_18));
+		regulator_put(ldo_5);
+
+		regulator_set_voltage(ldo_28, 2800000, 2800000);
+		regulator_enable(ldo_28);
+		//	printk("%s set ldo7 vcc28_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_28));
+		regulator_put(ldo_28);
+
 	if (camera_power != INVALID_GPIO)  {
 		  if (camera_io_init & RK29_CAM_POWERACTIVE_MASK) {
 			gpio_set_value(camera_power, ((camera_ioflag&RK29_CAM_POWERACTIVE_MASK)>>RK29_CAM_POWERACTIVE_BITPOS));
